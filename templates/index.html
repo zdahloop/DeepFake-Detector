@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DeepScan — Deepfake Detector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+
+<!-- LOADING OVERLAY — shown when form submits -->
+<div id="overlay">
+  <div class="ov-card">
+    <div class="ov-spinner"></div>
+    <p class="ov-title">Analysing your photo…</p>
+    <ul class="ov-steps">
+      <li id="ov1" class="ov-step ov-active"><span class="ov-dot"></span>Scanning image</li>
+      <li id="ov2" class="ov-step"><span class="ov-dot"></span>Detecting face via MTCNN</li>
+      <li id="ov3" class="ov-step"><span class="ov-dot"></span>Classifying with VGG16</li>
+      <li id="ov4" class="ov-step"><span class="ov-dot"></span>Generating Grad-CAM heatmap</li>
+    </ul>
+    <p class="ov-note">Usually takes 2–5 seconds</p>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-logo">DeepScan</span>
+  <div class="nav-links">
+    <a href="#upload">Detect</a>
+    <a href="#how">How It Works</a>
+    <a href="#about">About</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero" id="upload">
+  <p class="hero-label">AI Deepfake Detector</p>
+  <h1>Is this face <span class="accent">real?</span></h1>
+  <p class="hero-desc">
+    Upload any portrait photo. DeepScan analyses pixel-level artifacts 
+    and returns a Decision with a visual explanation — in seconds.
+
+  {% if error %}
+  <div class="error-box">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M8 5v3M8 10v1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    {{ error }}
+  </div>
+  {% endif %}
+
+  <!-- UPLOAD FORM -->
+  <form id="up-form" action="/predict" method="POST" enctype="multipart/form-data">
+
+    <!-- Hidden real file input — triggered by JS -->
+    <input type="file" id="file-input" name="image"
+           accept=".jpg,.jpeg,.png,.webp" style="display:none"/>
+
+    <!-- Drop box -->
+    <div id="drop-box" class="drop-box">
+
+      <!-- Idle view -->
+      <div id="view-idle" class="view-idle">
+        <div class="up-icon">
+          <svg viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="6" y="10" width="40" height="32" rx="5"/>
+            <circle cx="19" cy="24" r="6"/>
+            <path d="M6 34l12-12 9 9 8-7 11 9" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="up-main">Drag &amp; drop your photo here</p>
+        <button type="button" id="browse-btn" class="browse-btn">Browse files</button>
+        <p class="up-hint">JPG · PNG · WebP · max 16 MB</p>
+      </div>
+
+      <!-- Preview view -->
+      <div id="view-preview" class="view-preview">
+        <div class="prev-wrap">
+          <img id="prev-img" src="" alt="preview"/>
+          <button type="button" id="remove-btn" class="remove-btn" title="Remove">✕</button>
+        </div>
+        <p id="prev-name" class="prev-name"></p>
+      </div>
+
+    </div>
+
+    <button type="submit" id="analyse-btn" class="analyse-btn" disabled>
+      Analyse Photo
+    </button>
+
+  </form>
+
+  <p class="privacy-note">🔒 Your photo is never saved </p>
+</header>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <h2>How it works</h2>
+  <div class="how-grid">
+    <div class="how-card">
+      <span class="how-num">1</span>
+      <h3>Upload a photo</h3>
+      <p>Drop or browse any portrait image — JPG, PNG or WebP up to 16 MB.</p>
+    </div>
+    <div class="how-card">
+      <span class="how-num">2</span>
+      <h3>Face Detection</h3>
+      <p>MTCNN locates and crops the face precisely. No face = no analysis.</p>
+    </div>
+    <div class="how-card">
+      <span class="how-num">3</span>
+      <h3>AI Verdict</h3>
+      <p>Fine-tuned VGG16 classifies the face crop as Real or Fake with a confidence score.</p>
+    </div>
+    <div class="how-card">
+      <span class="how-num">4</span>
+      <h3>Visual Explanation</h3>
+      <p>Grad-CAM reveals exactly which facial regions drove the model's decision.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section" id="about">
+  <div class="about-card">
+    <div class="about-avatar">ZD</div>
+    <div class="about-body">
+      <h2 class="about-name">Ziad Mohamed Ahmed</h2>
+      <p class="about-role">Cyber Security Student</p>
+      <p class="about-bio">
+        DeepScan is a deepfake image detection system developed to address the growing risks of manipulated visual content 
+        in cybersecurity and digital forensics. 
+        The system combines MTCNN-based face detection with a fine-tuned VGG16 deep learning model to accurately classify 
+        images as real or fake.
+        To enhance transparency, Grad-CAM is integrated to provide visual explanations 
+        highlighting the regions that influence the model’s decision. 
+        The platform is designed as a lightweight, web-based application that delivers fast and reliable results 
+        while maintaining user privacy, as no uploaded images are stored.
+        DeepScan aims to support analysts, researchers, and everyday users in verifying 
+        the authenticity of digital images and reducing the impact of deepfake-based threats.
+      </p>
+      <div class="about-tags">
+        <span>Cybersecurity</span>
+        <span>Deep Learning</span>
+        <span>Python</span>
+        <span>PyTorch</span>
+        <span>Flask</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>Built by <strong>Ziad Mohamed Ahmed</strong> · Cyber Security Student</p>
+  <p class="footer-note">© 2026 Deepfake Detection. All rights reserved.</p>
+</footer>
+
+<script>
+(function () {
+  /* --- elements --- */
+  var fileInput  = document.getElementById('file-input');
+  var dropBox    = document.getElementById('drop-box');
+  var viewIdle   = document.getElementById('view-idle');
+  var viewPrev   = document.getElementById('view-preview');
+  var prevImg    = document.getElementById('prev-img');
+  var prevName   = document.getElementById('prev-name');
+  var browseBtn  = document.getElementById('browse-btn');
+  var removeBtn  = document.getElementById('remove-btn');
+  var analyseBtn = document.getElementById('analyse-btn');
+  var form       = document.getElementById('up-form');
+  var overlay    = document.getElementById('overlay');
+  var ovSteps    = ['ov1','ov2','ov3','ov4'];
+
+  /* --- browse button opens file picker --- */
+  browseBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    fileInput.click();
+  });
+
+  /* --- clicking the idle area also opens picker --- */
+  viewIdle.addEventListener('click', function () {
+    fileInput.click();
+  });
+
+  /* --- file chosen via picker --- */
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files && fileInput.files[0]) {
+      loadFile(fileInput.files[0]);
+    }
+  });
+
+  /* --- drag over --- */
+  dropBox.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropBox.classList.add('drag-over');
+  });
+
+  /* --- drag leave --- */
+  dropBox.addEventListener('dragleave', function (e) {
+    e.stopPropagation();
+    dropBox.classList.remove('drag-over');
+  });
+
+  /* --- drop --- */
+  dropBox.addEventListener('drop', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropBox.classList.remove('drag-over');
+    var files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files[0]) {
+      loadFile(files[0]);
+    }
+  });
+
+  /* --- remove / reset --- */
+  removeBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    reset();
+  });
+
+  /* --- load a file into the preview --- */
+  function loadFile(file) {
+    /* read and show preview */
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      prevImg.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    prevName.textContent = file.name;
+
+    /* switch views */
+    viewIdle.style.display = 'none';
+    viewPrev.style.display = 'flex';
+    analyseBtn.disabled    = false;
+
+    /* put the dropped file into the real <input> so the form sends it */
+    try {
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+    } catch (_) {
+      /* DataTransfer not supported in very old browsers — picker still works */
+    }
+  }
+
+  /* --- reset to idle --- */
+  function reset() {
+    fileInput.value        = '';
+    prevImg.src            = '';
+    prevName.textContent   = '';
+    viewIdle.style.display = 'flex';
+    viewPrev.style.display = 'none';
+    analyseBtn.disabled    = true;
+  }
+
+  /* --- submit: show overlay BEFORE browser navigates --- */
+  form.addEventListener('submit', function () {
+    overlay.style.display  = 'flex';
+    analyseBtn.disabled    = true;
+
+    /* animate steps while server processes */
+    var delays = [0, 1400, 2900, 4400];
+    ovSteps.forEach(function (id, i) {
+      setTimeout(function () {
+        ovSteps.forEach(function (sid, si) {
+          var el = document.getElementById(sid);
+          if (!el) return;
+          el.classList.toggle('ov-active', si === i);
+          el.classList.toggle('ov-done',   si <  i);
+        });
+      }, delays[i]);
+    });
+  });
+
+  /* --- smooth scroll --- */
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+
+})();
+</script>
+</body>
+</html>
